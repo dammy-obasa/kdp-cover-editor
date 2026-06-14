@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Super-resolution model weights — auto-downloaded on first "Optimize" (~68 MB)
+weights/
+*.pth
+
+# Generated cover exports
+PAPERBACK_*.png
+PAPERBACK_*.pdf
+cover_spread.png
+cover_spread.pdf
+output/
+
+# Tooling / editor / OS
+.playwright-mcp/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Unrelated packaged skill artifact
+*.skill

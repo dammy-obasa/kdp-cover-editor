@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KDP Cover Editor by Dammy</title>
+  <link rel="stylesheet" href="/static/style.css?v=3">
+</head>
+<body>
+  <header class="topbar">
+    <button id="sidebarToggle" class="icon-btn" aria-label="Show or hide the controls panel" title="Show/hide panel">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <div class="brand">
+      <svg class="brand-logo" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 4h7a2 2 0 0 1 2 2v14a1 1 0 0 0-1-1H4z"/><path d="M20 4h-7a2 2 0 0 0-2 2v14a1 1 0 0 1 1-1h8z"/>
+      </svg>
+      <span class="brand-name">KDP Cover Editor</span>
+      <small class="brand-by">by Dammy</small>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside id="controls">
+
+      <details class="section" open>
+        <summary>Images</summary>
+        <div class="section-body">
+          <label class="field">Image 1
+            <input type="file" id="file" accept="image/*">
+          </label>
+          <label class="field">Image 2
+            <input type="file" id="file2" accept="image/*">
+          </label>
+        </div>
+      </details>
+
+      <details class="section" open>
+        <summary>Book Setup</summary>
+        <div class="section-body">
+          <label class="field">Pages
+            <input type="number" id="pages" value="120" min="1">
+          </label>
+          <label class="field">Paper
+            <select id="paper">
+              <option value="bw_white">B&amp;W White</option>
+              <option value="bw_cream">B&amp;W Cream</option>
+              <option value="color">Color</option>
+            </select>
+          </label>
+          <label class="field">Trim
+            <select id="trim">
+              <option value="6x9">6 x 9</option>
+              <option value="5x8">5 x 8</option>
+              <option value="5.5x8.5">5.5 x 8.5</option>
+              <option value="7x10">7 x 10</option>
+              <option value="8.5x11">8.5 x 11</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" id="guides"> <span>Bake guides into export (leave OFF for print-ready)</span></label>
+          <label class="check"><input type="checkbox" id="template"> <span>Show KDP reference (spine-safe + barcode)</span></label>
+          <label class="check"><input type="checkbox" id="blankOutside"> <span>Blank area outside live/safe lines (white)</span></label>
+        </div>
+      </details>
+
+      <details class="section" open>
+        <summary>Transform</summary>
+        <div class="section-body">
+          <label class="field">Rotate
+            <span class="slider-row">
+              <input type="range" id="rotate" min="-180" max="180" value="0">
+              <span id="rotateVal" class="slider-val">0&deg;</span>
+            </span>
+          </label>
+          <div class="btn-row">
+            <button id="flipH" class="btn btn-secondary">Flip H</button>
+            <button id="flipV" class="btn btn-secondary">Flip V</button>
+          </div>
+          <div class="btn-stack">
+            <button id="fit" class="btn btn-secondary">Fit to Safe Area</button>
+            <button id="fill" class="btn btn-secondary">Fit to Front Cover</button>
+            <button id="overallFit" class="btn btn-secondary">Overall Fit</button>
+            <button id="reset" class="btn btn-secondary">Reset</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="section" open>
+        <summary>Layers</summary>
+        <div class="section-body">
+          <p class="hint">Hold <kbd>Ctrl</kbd> while dragging to lock one axis.</p>
+          <div class="btn-stack">
+            <button id="bringForward" class="btn btn-secondary">Bring Forward</button>
+            <button id="sendBackward" class="btn btn-secondary">Send Backward</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="section" open>
+        <summary>Optimize</summary>
+        <div class="section-body">
+          <p id="dpiWarn" class="warn"></p>
+          <button id="optimize" class="btn btn-primary" disabled>Optimize selected to 300 DPI</button>
+          <div id="optimizeProgress" class="progress" hidden>
+            <div id="optimizeBar"></div>
+            <span id="optimizePct">0%</span>
+          </div>
+        </div>
+      </details>
+
+      <details class="section" open>
+        <summary>Export</summary>
+        <div class="section-body">
+          <button id="export" class="btn btn-primary" disabled>Export PNG</button>
+          <button id="exportPdf" class="btn btn-secondary" disabled>Export PDF</button>
+          <p id="status" class="status"></p>
+        </div>
+      </details>
+
+    </aside>
+
+    <main id="stage-wrap">
+      <div id="stage"></div>
+    </main>
+  </div>
+
+  <script src="/static/konva.min.js"></script>
+  <script src="/static/app.js?v=3"></script>
+</body>
+</html>
