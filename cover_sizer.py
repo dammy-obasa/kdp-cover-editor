@@ -1,17 +1,10 @@
 """
 KDP Full-Cover Sizer
-Fits any image to a KDP paperback spread (back + spine + front + bleed).
-
-Usage:
-  python cover_sizer.py --image path/to/img.png --pages 120
-  python cover_sizer.py --image img.png --pages 200 --paper color --trim 6x9 --no-guides
-  python cover_sizer.py --image img.png --pages 120 --info
+Dimension math + Pillow rendering for a KDP paperback cover spread
+(back + spine + front + bleed). Used by the web app's Flask backend.
 """
 
-import argparse
-import sys
-from pathlib import Path
-from PIL import Image, ImageDraw, ImageOps, ImageChops
+from PIL import Image, ImageDraw, ImageChops
 
 DPI = 300
 
@@ -90,69 +83,6 @@ def calc_dims(trim_w: float, trim_h: float, pages: int, paper: str) -> dict:
         bc_x=bc_x, bc_y=bc_y, bc_w=bc_w, bc_h=bc_h,
         safe_x=safe_x, safe_y=safe_y, safe_w=safe_w, safe_h=safe_h,
     )
-
-
-def print_info(d: dict):
-    print(f"\nKDP Cover Dimensions @ {DPI} DPI")
-    print(f"  Trim:   {d['trim_w']}\" × {d['trim_h']}\"  ({d['panel_w']} × {d['panel_h']} px)")
-    print(f"  Spine:  {d['spine_in']}\" ({d['spine_px']} px)  [{d['pages']} pp, {d['paper']}]")
-    print(f"  Bleed:  {BLEED}\" ({d['bleed_px']} px)")
-    print(f"  Canvas: {d['total_w']} × {d['total_h']} px  "
-          f"({d['total_w']/DPI:.3f}\" × {d['total_h']/DPI:.3f}\")\n")
-
-
-def autocrop(img: Image.Image, threshold: int = 245) -> Image.Image:
-    """Crop off uniform near-white padding around the real artwork."""
-    gray = img.convert("L")
-    # mask: content = darker than threshold (i.e. not near-white)
-    mask = gray.point(lambda p: 255 if p < threshold else 0)
-    bbox = mask.getbbox()
-    if not bbox:
-        return img  # all white — nothing to crop
-    return img.crop(bbox)
-
-
-def check_image(img_path: str, d: dict, do_autocrop: bool) -> Image.Image:
-    img = Image.open(img_path).convert("RGB")
-    ow, oh = img.size
-
-    if do_autocrop:
-        img = autocrop(img)
-        if img.size != (ow, oh):
-            cw, ch = img.size
-            print(f"Auto-cropped padding: {ow}×{oh} -> {cw}×{ch} px "
-                  f"(removed {ow-cw} px W, {oh-ch} px H)")
-
-    iw, ih = img.size
-    rw, rh = d["total_w"], d["total_h"]
-
-    in_ar  = iw / ih
-    req_ar = rw / rh
-    if abs(in_ar - req_ar) / req_ar > 0.02:
-        print(f"  NOTE: artwork aspect {in_ar:.3f} differs from target {req_ar:.3f} "
-              f"— edges will be cropped to fit (no distortion).")
-
-
-    print(f"Image input:    {iw} × {ih} px  ({iw/DPI:.3f}\" × {ih/DPI:.3f}\")")
-    print(f"Required canvas:{rw} × {rh} px  ({rw/DPI:.3f}\" × {rh/DPI:.3f}\")")
-
-    if iw == rw and ih == rh:
-        print("  Dimensions match exactly — no scaling needed.\n")
-    else:
-        dw = iw - rw
-        dh = ih - rh
-        print(f"  Mismatch: width {'+' if dw>=0 else ''}{dw} px, height {'+' if dh>=0 else ''}{dh} px")
-        if iw < rw or ih < rh:
-            print("  WARNING: Image is smaller than required — upscaling will reduce quality.")
-        else:
-            print("  Image will be cropped/scaled to fit exactly.")
-        print(f"  Output will be enforced to {rw} × {rh} px @ {DPI} DPI.\n")
-
-    return img
-
-
-def fit_image(img: Image.Image, size: tuple[int, int]) -> Image.Image:
-    return ImageOps.fit(img, size, method=Image.Resampling.LANCZOS)
 
 
 def draw_guides(canvas: Image.Image, d: dict) -> Image.Image:
@@ -298,51 +228,3 @@ def render_with_transform(orig_img: "Image.Image", d: dict, transform: dict,
                           guides: bool, blank_outside: bool = False) -> "Image.Image":
     """Single-image convenience wrapper around render_with_transforms."""
     return render_with_transforms([orig_img], d, [transform], guides, blank_outside)
-
-
-def build_cover(image_path: str, d: dict, guides: bool, output: str, do_autocrop: bool):
-    img = check_image(image_path, d, do_autocrop)
-    canvas = fit_image(img, (d["total_w"], d["total_h"]))
-    assert canvas.size == (d["total_w"], d["total_h"]), "Canvas size mismatch after fit — aborting."
-
-    if guides:
-        canvas = draw_guides(canvas, d)
-
-    Path(output).parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(output, dpi=(DPI, DPI))
-    print(f"Saved: {output}  ({canvas.width}×{canvas.height} px @ {DPI} DPI)")
-
-
-def main():
-    parser = argparse.ArgumentParser(description="KDP Full-Cover Sizer")
-    parser.add_argument("--image",  help="Input image path")
-    parser.add_argument("--pages",  type=int, default=120, help="Page count (default 120)")
-    parser.add_argument("--paper",  choices=SPINE_PER_PAGE.keys(), default="bw_white")
-    parser.add_argument("--trim",   choices=TRIM_SIZES.keys(), default="6x9")
-    parser.add_argument("--output", default=None, help="Output PNG path")
-    parser.add_argument("--no-guides", action="store_true", help="Omit guide overlays")
-    parser.add_argument("--no-autocrop", action="store_true",
-                        help="Do not auto-crop white padding around the artwork")
-    parser.add_argument("--info",   action="store_true", help="Print dimensions only")
-    args = parser.parse_args()
-
-    trim_w, trim_h = TRIM_SIZES[args.trim]
-    d = calc_dims(trim_w, trim_h, args.pages, args.paper)
-    print_info(d)
-
-    if args.info:
-        return
-
-    if not args.image:
-        parser.error("--image is required unless --info is used")
-
-    output = args.output or str(
-        Path(__file__).parent.parent / "output" / "cover_spread.png"
-    )
-
-    build_cover(args.image, d, guides=not args.no_guides, output=output,
-                do_autocrop=not args.no_autocrop)
-
-
-if __name__ == "__main__":
-    main()

@@ -71,15 +71,6 @@ Then open <http://127.0.0.1:5050>.
    ~300 DPI. The first run downloads a small model into `weights/`.
 6. **Export** — PNG or PDF. Leave "Bake guides into export" **off** for a print-ready file.
 
-### Command-line
-
-`cover_sizer.py` also works standalone to fit a single image to a full cover:
-
-```bash
-python cover_sizer.py --image art.png --pages 120 --paper bw_white --trim 6x9
-python cover_sizer.py --pages 200 --trim 6x9 --info   # print dimensions only
-```
-
 ## How it works
 
 KDP requires the full cover as one image: `bleed | back | spine | front | bleed`. Spine width
@@ -91,7 +82,7 @@ to full-resolution pixels at export time.
 
 ```
 app.py            Flask server + API (dimensions, render, upscale)
-cover_sizer.py    KDP dimension math + Pillow rendering (also a CLI)
+cover_sizer.py    KDP dimension math + Pillow rendering (used by app.py)
 upscaler.py       Real-ESRGAN x4 super-resolution (lazy-loaded)
 static/           index.html, style.css, app.js, konva.min.js
 tests/            pytest suite
