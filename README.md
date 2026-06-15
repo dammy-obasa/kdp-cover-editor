@@ -1,3 +1,5 @@
+![KDP Cover Editor screenshot](kdp-cover-editor.png)
+
 # KDP Cover Editor
 
 A lightweight web tool for building **print-ready Amazon KDP paperback cover spreads**
